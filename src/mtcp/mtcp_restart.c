@@ -193,11 +193,12 @@ static void
 beforeLoadingGniDriverBlacklistAddresses()
 {
   // FIXME: This needs to be made dynamic.
-  const void *start = (const void*)0x2aaaaaab0000;
-  const void *end = (const void*)0x2aaaaaaf8000;
-  const size_t len = end - start;
-  const void *start2 = (const void*)0x2aaaaab1b000;
-  const void *end2 = g_range->start;
+  const void *start1 = (const void*)0x2aaaaaab0000; //End of vdso
+  // remapped (vvar + vdso) + hole for mtcp_restart
+  const void *end1 = (const void*)0x2aaaaaaf8000;
+  const size_t len1 = end1 - start1;
+  const void *start2 = (const void*)0x2aaaaab1b000; // Start of upper half
+  const void *end2 = g_range->start; //Start of lower half memory
   const size_t len2 = end2 - start2;
 
   /*
@@ -217,10 +218,10 @@ beforeLoadingGniDriverBlacklistAddresses()
    * ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0 [vsyscall]
    */
 
-  void *addr = mtcp_sys_mmap(start, len,
+  void *addr = mtcp_sys_mmap(start1, len1,
                              PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
                              -1, 0);
-  MTCP_ASSERT(addr == start);
+  MTCP_ASSERT(addr == start1);
   addr = mtcp_sys_mmap(start2, len2,
                        PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
                        -1, 0);
@@ -231,14 +232,14 @@ static void
 afterLoadingGniDriverUnblacklistAddresses()
 {
   // FIXME: This needs to be made dynamic.
-  const void *start = (const void*)0x2aaaaaab0000;
-  const void *end = (const void*)0x2aaaaaaf8000;
-  const size_t len = end - start;
+  const void *start1 = (const void*)0x2aaaaaab0000;
+  const void *end1 = (const void*)0x2aaaaaaf8000;
+  const size_t len1 = end1 - start1;
   const void *start2 = (const void*)0x2aaaaab1b000;
   const void *end2 = g_range->start;
   const size_t len2 = end2 - start2;
 
-  mtcp_sys_munmap(start, len);
+  mtcp_sys_munmap(start1, len1);
   mtcp_sys_munmap(start2, len2);
 }
 
